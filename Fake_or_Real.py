@@ -7,7 +7,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import RegexpTokenizer
 from wordcloud import WordCloud
 import os
 from textblob import TextBlob
@@ -185,6 +185,9 @@ def remove_punctuation(text)
     return no_punct
 
 
+# Tokenize
+tokenizer = RegexpTokenizer(r'\w+')
+df["text"] = df["text"].apply(lambda x: tokenizer.tokenize(x.lower()))
 
 
 # Drop missing values
