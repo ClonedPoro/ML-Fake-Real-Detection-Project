@@ -171,3 +171,10 @@ axes[1, 1].set_xlabel("Mean word length [text]")
 pd.set_option('display.max_columns', None)
 #print(title_length, num_of_words_title, mean_word_length_title)
 print("New:\n", df.describe(include="all"))
+
+# Removing HTML
+
+def remove_html(text)
+    soup = BeautifulSoup(text, "lxml")
+    html_free = soup.get_text()
+    return html_free
