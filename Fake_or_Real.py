@@ -185,7 +185,7 @@ def remove_punctuation(text)
     return no_punct
 
 # Drop missing values
-# df.dropna(inplace=True)
+# df.dropna(subset="text")
 
 # New, preprocessed df
 df_preprocessed = df.remove_html(text).remove_puncutation(text)
