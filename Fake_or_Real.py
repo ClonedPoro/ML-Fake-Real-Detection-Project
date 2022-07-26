@@ -184,6 +184,8 @@ def remove_punctuation(text)
     no_punct = "".join([c for c in text if c not in string.punctuation])
     return no_punct
 
+# Drop missing values
+# df.dropna(inplace=True)
 
 # New, preprocessed df
 df_preprocessed = df.remove_html(text).remove_puncutation(text)
