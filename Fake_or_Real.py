@@ -172,9 +172,19 @@ pd.set_option('display.max_columns', None)
 #print(title_length, num_of_words_title, mean_word_length_title)
 print("New:\n", df.describe(include="all"))
 
-# Removing HTML
 
+# Removing HTML
 def remove_html(text)
     soup = BeautifulSoup(text, "lxml")
     html_free = soup.get_text()
     return html_free
+
+# Remove punctuation
+def remove_punctuation(text)
+    no_punct = "".join([c for c in text if c not in string.punctuation])
+    return no_punct
+
+
+# New, preprocessed df
+df_preprocessed = df.remove_html(text).remove_puncutation(text)
+print(df_preprocessed.head())
