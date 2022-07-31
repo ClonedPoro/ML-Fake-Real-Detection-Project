@@ -200,3 +200,22 @@ def remove_html(text):
     soup = BeautifulSoup(text, "lxml")
     html_free = soup.get_text()
     return html_free
+
+# Remove punctuation
+def remove_punctuation(text)
+    no_punct = "".join([c for c in text if c not in string.punctuation])
+    return no_punct
+
+
+# Tokenize
+tokenizer = RegexpTokenizer(r'\w+')
+df["text"] = df["text"].apply(lambda x: tokenizer.tokenize(x.lower()))
+
+
+# Drop missing values
+# df.dropna(subset="text")
+
+
+# New, preprocessed df
+df_preprocessed = df.remove_html(text).remove_punctuation(text)
+print(df_preprocessed.head())
