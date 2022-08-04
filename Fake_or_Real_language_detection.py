@@ -8,7 +8,7 @@ from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
-#from readability import Readability
+# from readability import Readability
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
 import os
@@ -19,15 +19,16 @@ from sklearn.feature_extraction.text import CountVectorizer
 import lxml
 from lxml.html.clean import Cleaner
 from lxml.html import fromstring
+from sklearn import preprocessing
 
 # from textblob import TextBlob
 # from matplotlib.ticker import FormatStrFormatter
 # import numpy as np
 
 
-#cwd = os.getcwd()
-#os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
+# cwd = os.getcwd()
+# os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 # DetectorFactory.seed = 0
@@ -89,7 +90,7 @@ print(df.text.isnull().sum())
 
 # And 39 entries without text
 
-#df1 = df[df.isna().any(axis=1)]  # saves all entries with no title and/or no text in df1
+# df1 = df[df.isna().any(axis=1)]  # saves all entries with no title and/or no text in df1
 
 # adds title_length and text_length to dataframe
 title_length = []
@@ -129,76 +130,73 @@ df["text_wordnum"] = num_of_words_text
 df["title_meanlen"] = mean_word_length_title
 df["text_meanlen"] = mean_word_length_text
 
-
-
-
 for i in range(len(df.index)):
     if df.loc[i, "title_wordnum"] >= 60:
         print(df.loc[i, "title"])
 
-# # Plot of text/title length and text/title mean word length in one subplot
-# fig, axes = plt.subplots(2, 2, figsize=(12, 12))
-# sb.histplot(ax=axes[1, 0], data=df, x="text_length", kde=True)
-# axes[1, 0].set_xlim(0, 30000)
-# axes[1, 0].set_xlabel("Length of Text [characters]")
-# sb.histplot(ax=axes[0, 0], data=df, x="title_length", kde=True)
-# axes[0, 0].set_xlim(0, )
-# axes[0, 0].set_xlabel("Length of Title [characters]")
-# sb.histplot(ax=axes[1, 1], data=df, x="text_meanlen", kde=True)
-# axes[1, 1].set_xlim(0, 25)
-# axes[1, 1].set_xlabel("Mean word length [text]")
-# sb.histplot(ax=axes[0, 1], data=df, x="title_meanlen", kde=True)
-# axes[0, 1].set_xlim(0, 25)
-# axes[0, 1].set_xlabel("Mean word length [title]")
+# Plot of text/title length and text/title mean word length in one subplot
+fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+sb.histplot(ax=axes[1, 0], data=df, x="text_length", kde=True)
+axes[1, 0].set_xlim(0, 30000)
+axes[1, 0].set_xlabel("Length of Text [characters]")
+sb.histplot(ax=axes[0, 0], data=df, x="title_length", kde=True)
+axes[0, 0].set_xlim(0, )
+axes[0, 0].set_xlabel("Length of Title [characters]")
+sb.histplot(ax=axes[1, 1], data=df, x="text_meanlen", kde=True)
+axes[1, 1].set_xlim(0, 25)
+axes[1, 1].set_xlabel("Mean word length [text]")
+sb.histplot(ax=axes[0, 1], data=df, x="title_meanlen", kde=True)
+axes[0, 1].set_xlim(0, 25)
+axes[0, 1].set_xlabel("Mean word length [title]")
 
 # plt.show()
 
 df_fake = df.loc[df["label"] == 1]
 df_real = df.loc[df["label"] == 0]
-# # Plotting of differences in title length and mean word length by Fake/Real News categorization
-# fig, axes = plt.subplots(2, 2, figsize=(12, 12))
-# sb.histplot(ax=axes[0, 0], data=df_real, x="title_wordnum", kde=True)
-# axes[0, 0].set_xlim(0, )
-# axes[0, 0].set_ylim(0, )
-# axes[0, 0].set_xlabel("Length of Title [words]")
-# axes[0, 0].set_title("Real News")
-# sb.histplot(ax=axes[0, 1], data=df_fake, x="title_wordnum", kde=True)
-# axes[0, 1].set_xlim(0, )
-# axes[0, 1].set_ylim(0, )
-# axes[0, 1].set_xlabel("Length of Title [words]")
-# axes[0, 1].set_title("Fake News")
-# sb.histplot(ax=axes[1, 0], data=df_real, x="title_meanlen", kde=True)
-# axes[1, 0].set_xlim(0, 15)
-# axes[1, 0].set_ylim(0, 1500)
-# axes[1, 0].set_xlabel("Mean word length [title]")
-# sb.histplot(ax=axes[1, 1], data=df_fake, x="title_meanlen", kde=True)
-# axes[1, 1].set_xlim(0, 15)
-# axes[1, 1].set_ylim(0, 1500)
-# axes[1, 1].set_xlabel("Mean word length [title]")
+# Plotting of differences in title length and mean word length by Fake/Real News categorization
+fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+sb.histplot(ax=axes[0, 0], data=df_real, x="title_wordnum", kde=True)
+axes[0, 0].set_xlim(0, )
+axes[0, 0].set_ylim(0, )
+axes[0, 0].set_xlabel("Length of Title [words]")
+axes[0, 0].set_title("Real News")
+sb.histplot(ax=axes[0, 1], data=df_fake, x="title_wordnum", kde=True)
+axes[0, 1].set_xlim(0, )
+axes[0, 1].set_ylim(0, )
+axes[0, 1].set_xlabel("Length of Title [words]")
+axes[0, 1].set_title("Fake News")
+sb.histplot(ax=axes[1, 0], data=df_real, x="title_meanlen", kde=True)
+axes[1, 0].set_xlim(0, 15)
+axes[1, 0].set_ylim(0, 1500)
+axes[1, 0].set_xlabel("Mean word length [title]")
+sb.histplot(ax=axes[1, 1], data=df_fake, x="title_meanlen", kde=True)
+axes[1, 1].set_xlim(0, 15)
+axes[1, 1].set_ylim(0, 1500)
+axes[1, 1].set_xlabel("Mean word length [title]")
 
 # plt.show()
 
 # Plotting of differences in text length and mean word length by Fake/Real News categorization
 
-# fig, axes = plt.subplots(2, 2, figsize=(12, 12))
-# sb.histplot(ax=axes[0, 0], data=df_real, x="title_wordnum", kde=True)
-# axes[0, 0].set_xlim(0, )
-# axes[0, 0].set_ylim(0, )
-# axes[0, 0].set_xlabel("Length of text [words]")
-# axes[0, 0].set_title("Real News")
-# sb.histplot(ax=axes[0, 1], data=df_fake, x="title_wordnum", kde=True)
-# axes[0, 1].set_xlim(0, )
-# axes[0, 1].set_ylim(0, )
-# axes[0, 1].set_xlabel("Length of text [words]")
-# axes[0, 1].set_title("Fake News")
-# sb.histplot(ax=axes[1, 0], data=df_real, x="text_meanlen", kde=True)
-# axes[1, 0].set_xlim(0, 15)
-# axes[1, 0].set_ylim(0, 1300)
-# axes[1, 0].set_xlabel("Mean word length [text]")
-# sb.histplot(ax=axes[1, 1], data=df_fake, x="text_meanlen", kde=True)
-# axes[1, 1].set_xlim(0, 15)
-# axes[1, 1].set_ylim(0, 1300)
-# axes[1, 1].set_xlabel("Mean word length [text]")
+fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+sb.histplot(ax=axes[0, 0], data=df_real, x="title_wordnum", kde=True)
+axes[0, 0].set_xlim(0, )
+axes[0, 0].set_ylim(0, )
+axes[0, 0].set_xlabel("Length of text [words]")
+axes[0, 0].set_title("Real News")
+sb.histplot(ax=axes[0, 1], data=df_fake, x="title_wordnum", kde=True)
+axes[0, 1].set_xlim(0, )
+axes[0, 1].set_ylim(0, )
+axes[0, 1].set_xlabel("Length of text [words]")
+axes[0, 1].set_title("Fake News")
+sb.histplot(ax=axes[1, 0], data=df_real, x="text_meanlen", kde=True)
+axes[1, 0].set_xlim(0, 15)
+axes[1, 0].set_ylim(0, 1300)
+axes[1, 0].set_xlabel("Mean word length [text]")
+sb.histplot(ax=axes[1, 1], data=df_fake, x="text_meanlen", kde=True)
+axes[1, 1].set_xlim(0, 15)
+axes[1, 1].set_ylim(0, 1300)
+axes[1, 1].set_xlabel("Mean word length [text]")
 
 # plt.show()
 
@@ -208,6 +206,9 @@ print("New:\n", df.describe(include="all"))
 
 # Drop missing values
 df.dropna(subset="text")
+
+
+# z-standardizing lengths and number of words
 
 
 # Removing HTML
@@ -236,7 +237,7 @@ def remove_stopwords(text):
 
 
 # Lemmatize
-def lemmatize_text(text):
+def lemmatize(text):
     lemmatizer = WordNetLemmatizer()
     return [lemmatizer.lemmatize(l) for l in text]
 
@@ -245,52 +246,55 @@ def lemmatize_text(text):
 def pos_tagging(text):
     return nltk.pos_tag(text)
 
+
 # Sentiment Analysis
 def sentiment_score(text):
     sia = SentimentIntensityAnalyzer()
-    #add check for "language" variable here.
+    # add check for "language" variable here.
     sentiment_dict = sia.polarity_scores(text)
     return sentiment_dict['compound']
 
+# Standardizer
+def standardize(values):
+    scaler = preprocessing.scale(values)
+    return scaler
+
 
 ##drop all entries with languages other than en (70700 entries), ru (156), es (147), de (112) and fr (47)
-#df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
+# df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
 df[(df.language == "en")]
 
 ##remove links in strings
-for i in range(0,len(df.index)):
+for i in range(0, len(df.index)):
     test = df.loc[i, "text"]
-    df.loc[i, "text"] = re.sub(r'http\S+', '', str(df.loc[i,"text"]))
+    df.loc[i, "text"] = re.sub(r'http\S+', '', str(df.loc[i, "text"]))
     # if test != df.loc[i,"text"]:
     #     print("Before:", test)
     #     print("After:", df.loc[i,"text"])
     df.loc[i, "title"] = re.sub(r'http\S+', '', str(df.loc[i, "title"]))
-#Before: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value. https://t.co/5JsyVAKQRL  Ben Sasse (@BenSasse) September 28, 20176
-#After: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value.   Ben Sasse (@BenSasse) September 28, 20176
-
-
+# Before: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value. https://t.co/5JsyVAKQRL  Ben Sasse (@BenSasse) September 28, 20176
+# After: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value.   Ben Sasse (@BenSasse) September 28, 20176
 
 
 df_preprocessed = df
 df_preprocessed["text"] = df["text"].apply(lambda x: remove_html(x))  # Remove html
-#Before:
+# Before:
 # First they ignore you, then they laugh at you, then they fight you, then you win. // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ <span class="mceItemHidden" data-mce-bogus="1"><span></span>&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;(function(d, s, id) {  var js, <span class="mceItemHidden" data-mce-bogus="1"><span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span></span> = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v2.3";  <span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span>.parentNode.insertBefore(js, fjs);}(document, 'script', '<span class="hiddenSpellError" pre="" data-mce-bogus="1">facebook-jssdk</span>')); // ]]&gt;Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
-#After:
+# After:
 # First they ignore you, then they laugh at you, then they fight you, then you win. (function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3";  fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
 
 ##js removal
 
-for i in range(0,len(df.index)):
+for i in range(0, len(df.index)):
     try:
-        df_preprocessed.loc[i, "text"] = fromstring(df_preprocessed.loc[i,"text"]).text_content()
+        df_preprocessed.loc[i, "text"] = fromstring(df_preprocessed.loc[i, "text"]).text_content()
     except lxml.etree.ParserError:
         df_preprocessed.loc[i, "title"] = df_preprocessed.loc[i, "title"]
-#Before: This is how he ll be remembered:// <![CDATA[ (function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.3"; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
-#After: This is how he ll be remembered:// WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
+# Before: This is how he ll be remembered:// <![CDATA[ (function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.3"; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
+# After: This is how he ll be remembered:// WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
 
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
-
 
 ##tf idf extraction
 vectorizer = CountVectorizer()
@@ -300,31 +304,38 @@ print(vectorizer.get_feature_names())
 new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
 print(new_frame.head(10))
 
-
 df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
 df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
-#Before: No comment is expected from Barack Obama Members of the ...
-#After: 'no', 'comment', 'is', 'expected', 'from', 'barack', 'obama', 'members', 'of', 'the'
+# Before: No comment is expected from Barack Obama Members of the ...
+# After: 'no', 'comment', 'is', 'expected', 'from', 'barack', 'obama', 'members', 'of', 'the'
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
-df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: lemmatize_text(x))  # Lemmatize
+df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: lemmatize(x))  # Lemmatize
 
 ##repeat for titles
 df_preprocessed["title"] = df["title"].apply(lambda x: remove_html(x))  # Remove html
-for i in range(0,len(df.index)):
+for i in range(0, len(df.index)):
     try:
-        df_preprocessed.loc[i, "title"] = fromstring(df_preprocessed.loc[i,"title"]).text_content()
+        df_preprocessed.loc[i, "title"] = fromstring(df_preprocessed.loc[i, "title"]).text_content()
     except lxml.etree.ParserError:
         df_preprocessed.loc[i, "title"] = df_preprocessed.loc[i, "title"]
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: tokenizer(x))  # Remove tokenization
 df_preprocessed["pos_tagged_title"] = df_preprocessed["title"].apply(lambda x: pos_tagging(x))  # POS-tagging
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_stopwords(x))  # Remove stop words
-df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: lemmatize_text(x))  # Lemmatize
+df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: lemmatize(x))  # Lemmatize
 
+# Standardize continuous data
+df_preprocessed["title_meanlen_standardized"] = \
+    standardize(df_preprocessed["title_meanlen"])  # Standardize mean length of title
+df_preprocessed["text_meanlen_standardized"] = \
+    standardize(df_preprocessed["text_meanlen"])  # Standardize mean length of text
+df_preprocessed["title_wordnum_standardized"] = \
+    standardize(df_preprocessed["title_wordnum"])  # Standardize word count of title
+df_preprocessed["text_wordnum_standardized"] = \
+    standardize(df_preprocessed["text_wordnum"])  # Standardize word count of text
 
-
-#Let's check how well the data is balanced between fake and real news and plot the respective sentiment scores
+# Let's check how well the data is balanced between fake and real news and plot the respective sentiment scores
 fake_count = len(df_fake) / df.shape[0]
 real_count = len(df_real) / df.shape[0]
 
@@ -332,18 +343,18 @@ label_count = [fake_count, real_count]
 
 df["pos_or_neg"] = df["sentiment score_text"].apply(
     lambda x: "positive" if x > 0.05 else ("negative" if x < -0.05 else "neutral"))
-fig = plt.figure(figsize=(18,10))
-ax1 = plt.subplot2grid((1,2),(0,0))
+fig = plt.figure(figsize=(18, 10))
+ax1 = plt.subplot2grid((1, 2), (0, 0))
 plt.pie(x=label_count, explode=[0.1, 0.1], colors=['firebrick', 'navy'], startangle=90, shadow=True,
-            labels=['Fake News', 'True News'], autopct='%1.1f%%')
+        labels=['Fake News', 'True News'], autopct='%1.1f%%')
 
-ax1 = plt.subplot2grid((1,2),(0,1))
+ax1 = plt.subplot2grid((1, 2), (0, 1))
 ax = sb.countplot(x="label", hue="pos_or_neg", data=df)
 ax.set_xlabel("Comparison between sentiment scores of fake news and real news")
 ax.set_xticklabels(['Real News', 'Fake News'])
 plt.title("Classification")
 
-plt.show()
+# plt.show()
 
 pd.set_option('display.max_columns', None)
 
