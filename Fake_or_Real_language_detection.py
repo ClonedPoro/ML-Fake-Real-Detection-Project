@@ -1,9 +1,6 @@
-#asd sasslull möp
 import pandas as pd
-
 import seaborn as sb
 import matplotlib.pyplot as plt
-
 from langdetect import detect
 import re
 import nltk
@@ -13,13 +10,15 @@ from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 #from readability import Readability
 from sklearn.feature_extraction.text import CountVectorizer
-
 from wordcloud import WordCloud
 import os
-
 from langdetect import DetectorFactory
 from bs4 import BeautifulSoup
 import string
+from sklearn.feature_extraction.text import CountVectorizer
+import lxml
+from lxml.html.clean import Cleaner
+from lxml.html import fromstring
 
 # from textblob import TextBlob
 # from matplotlib.ticker import FormatStrFormatter
@@ -278,36 +277,48 @@ df_preprocessed["text"] = df["text"].apply(lambda x: remove_html(x))  # Remove h
 # First they ignore you, then they laugh at you, then they fight you, then you win. // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ <span class="mceItemHidden" data-mce-bogus="1"><span></span>&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;(function(d, s, id) {  var js, <span class="mceItemHidden" data-mce-bogus="1"><span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span></span> = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v2.3";  <span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span>.parentNode.insertBefore(js, fjs);}(document, 'script', '<span class="hiddenSpellError" pre="" data-mce-bogus="1">facebook-jssdk</span>')); // ]]&gt;Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
 #After:
 # First they ignore you, then they laugh at you, then they fight you, then you win. (function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3";  fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
-#ideally we could also remove js elements
-df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
+
+##js removal
+
+for i in range(0,len(df.index)):
+    try:
+        df_preprocessed.loc[i, "text"] = fromstring(df_preprocessed.loc[i,"text"]).text_content()
+    except lxml.etree.ParserError:
+        df_preprocessed.loc[i, "title"] = df_preprocessed.loc[i, "title"]
+#Before: This is how he ll be remembered:// <![CDATA[ (function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.3"; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
+#After: This is how he ll be remembered:// WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
+
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
 
 
 ##tf idf extraction
-from sklearn.feature_extraction.text import CountVectorizer
 vectorizer = CountVectorizer()
-text = []
-for i in range(0,len(df.index)):
-    text.append(df.loc[i,"text"])
-matrix = vectorizer.fit_transform(text)
+matrix = vectorizer.fit_transform([str(df["text"])])
 pd.DataFrame(matrix.toarray())
 print(vectorizer.get_feature_names())
 new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
 print(new_frame.head(10))
 
-##repeat for titles
-#df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
+
+df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
+df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
 #Before: No comment is expected from Barack Obama Members of the ...
 #After: 'no', 'comment', 'is', 'expected', 'from', 'barack', 'obama', 'members', 'of', 'the'
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: lemmatize_text(x))  # Lemmatize
 
+##repeat for titles
 df_preprocessed["title"] = df["title"].apply(lambda x: remove_html(x))  # Remove html
-df_preprocessed["pos_tagged_title"] = df_preprocessed["title"].apply(lambda x: pos_tagging(x))  # POS-tagging
+for i in range(0,len(df.index)):
+    try:
+        df_preprocessed.loc[i, "title"] = fromstring(df_preprocessed.loc[i,"title"]).text_content()
+    except lxml.etree.ParserError:
+        df_preprocessed.loc[i, "title"] = df_preprocessed.loc[i, "title"]
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: tokenizer(x))  # Remove tokenization
+df_preprocessed["pos_tagged_title"] = df_preprocessed["title"].apply(lambda x: pos_tagging(x))  # POS-tagging
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: lemmatize_text(x))  # Lemmatize
 
@@ -321,15 +332,16 @@ label_count = [fake_count, real_count]
 
 df["pos_or_neg"] = df["sentiment score_text"].apply(
     lambda x: "positive" if x > 0.05 else ("negative" if x < -0.05 else "neutral"))
-
+fig = plt.figure(figsize=(18,10))
+ax1 = plt.subplot2grid((1,2),(0,0))
 plt.pie(x=label_count, explode=[0.1, 0.1], colors=['firebrick', 'navy'], startangle=90, shadow=True,
             labels=['Fake News', 'True News'], autopct='%1.1f%%')
-plt.show()
 
+ax1 = plt.subplot2grid((1,2),(0,1))
 ax = sb.countplot(x="label", hue="pos_or_neg", data=df)
 ax.set_xlabel("Comparison between sentiment scores of fake news and real news")
 ax.set_xticklabels(['Real News', 'Fake News'])
-ax.legend(title="Classification")
+plt.title("Classification")
 
 plt.show()
 
