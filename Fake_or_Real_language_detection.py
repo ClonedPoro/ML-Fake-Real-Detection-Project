@@ -90,7 +90,7 @@ print(df.text.isnull().sum())
 
 # And 39 entries without text
 
-df1 = df[df.isna().any(axis=1)]  # saves all entries with no title and/or no text in df1
+#df1 = df[df.isna().any(axis=1)]  # saves all entries with no title and/or no text in df1
 
 # adds title_length and text_length to dataframe
 title_length = []
@@ -133,16 +133,6 @@ df["text_meanlen"] = mean_word_length_text
 
 
 
-
-# Sentiment Analysis
-def sentiment_score(text):
-    sia = SentimentIntensityAnalyzer()
-    sentiment_dict = sia.polarity_scores(text)
-    return sentiment_dict['compound']
-
-df["sentiment score"] = df["text"].apply(lambda x: sentiment_score(x))
-
-
 for i in range(len(df.index)):
     if df.loc[i, "title_wordnum"] >= 60:
         print(df.loc[i, "title"])
@@ -164,8 +154,8 @@ for i in range(len(df.index)):
 
 # plt.show()
 
-# df_fake = df.loc[df["label"] == 1]
-# df_real = df.loc[df["label"] == 0]
+df_fake = df.loc[df["label"] == 1]
+df_real = df.loc[df["label"] == 0]
 # # Plotting of differences in title length and mean word length by Fake/Real News categorization
 # fig, axes = plt.subplots(2, 2, figsize=(12, 12))
 # sb.histplot(ax=axes[0, 0], data=df_real, x="title_wordnum", kde=True)
@@ -213,27 +203,7 @@ for i in range(len(df.index)):
 
 # plt.show()
 
-# Let's check how well the data is balanced between fake and real news and plot the respective sentiment scores
-# fake_count = len(df_fake) / df.shape[0]
-# real_count = len(df_real) / df.shape[0]
 
-# label_count = [fake_count, real_count]
-#
-# df["pos_or_neg"] = df["sentiment score"].apply(
-#     lambda x: "positive" if x > 0.05 else ("negative" if x < -0.05 else "neutral"))
-#
-# plt.pie(x=label_count, explode=[0.1, 0.1], colors=['firebrick', 'navy'], startangle=90, shadow=True,
-#             labels=['Fake News', 'True News'], autopct='%1.1f%%')
-# plt.show()
-
-# ax = sb.countplot(x="label", hue="pos_or_neg", data=df)
-# ax.set_xlabel("Comparison between sentiment scores of fake news and real news")
-# ax.set_xticklabels(['Real News', 'Fake News'])
-# ax.legend(title="Classification")
-
-# plt.show()
-
-pd.set_option('display.max_columns', None)
 # print(title_length, num_of_words_title, mean_word_length_title)
 print("New:\n", df.describe(include="all"))
 
@@ -276,9 +246,17 @@ def lemmatize_text(text):
 def pos_tagging(text):
     return nltk.pos_tag(text)
 
+# Sentiment Analysis
+def sentiment_score(text):
+    sia = SentimentIntensityAnalyzer()
+    #add check for "language" variable here.
+    sentiment_dict = sia.polarity_scores(text)
+    return sentiment_dict['compound']
+
 
 ##drop all entries with languages other than en (70700 entries), ru (156), es (147), de (112) and fr (47)
-df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
+#df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
+df[(df.language == "en")]
 
 ##remove links in strings
 for i in range(0,len(df.index)):
@@ -291,11 +269,7 @@ for i in range(0,len(df.index)):
 #Before: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value. https://t.co/5JsyVAKQRL  Ben Sasse (@BenSasse) September 28, 20176
 #After: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value.   Ben Sasse (@BenSasse) September 28, 20176
 
-#Before:
-# First they ignore you, then they laugh at you, then they fight you, then you win. // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ // < ![CDATA[ <span class="mceItemHidden" data-mce-bogus="1"><span></span>&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;(function(d, s, id) {  var js, <span class="mceItemHidden" data-mce-bogus="1"><span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span></span> = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v2.3";  <span class="hiddenSpellError" pre="" data-mce-bogus="1">fjs</span>.parentNode.insertBefore(js, fjs);}(document, 'script', '<span class="hiddenSpellError" pre="" data-mce-bogus="1">facebook-jssdk</span>')); // ]]&gt;Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
-#After:
-# First they ignore you, then they laugh at you, then they fight you, then you win. (function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3";  fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
-#ideally we can also remove js elements
+
 
 
 df_preprocessed = df
@@ -305,7 +279,10 @@ df_preprocessed["text"] = df["text"].apply(lambda x: remove_html(x))  # Remove h
 #After:
 # First they ignore you, then they laugh at you, then they fight you, then you win. (function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0];  if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id;  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3";  fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk')); // ]]>Posted by Sarah Palin on Wednesday, February 24, 2016This quote has long been used by civil rights pioneers in their quest for justice and equality.
 #ideally we could also remove js elements
+df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
+df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
+
 
 ##tf idf extraction
 from sklearn.feature_extraction.text import CountVectorizer
@@ -316,26 +293,46 @@ for i in range(0,len(df.index)):
 matrix = vectorizer.fit_transform(text)
 pd.DataFrame(matrix.toarray())
 print(vectorizer.get_feature_names())
-pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
+new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
+print(new_frame.head(10))
 
 ##repeat for titles
+#df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
 #Before: No comment is expected from Barack Obama Members of the ...
 #After: 'no', 'comment', 'is', 'expected', 'from', 'barack', 'obama', 'members', 'of', 'the'
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: lemmatize_text(x))  # Lemmatize
-df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
 
 df_preprocessed["title"] = df["title"].apply(lambda x: remove_html(x))  # Remove html
+df_preprocessed["pos_tagged_title"] = df_preprocessed["title"].apply(lambda x: pos_tagging(x))  # POS-tagging
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: tokenizer(x))  # Remove tokenization
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["title"] = df_preprocessed["title"].apply(lambda x: lemmatize_text(x))  # Lemmatize
-df_preprocessed["pos_tagged_title"] = df_preprocessed["title"].apply(lambda x: pos_tagging(x))  # POS-tagging
 
 
-##tf idf extraction
 
+#Let's check how well the data is balanced between fake and real news and plot the respective sentiment scores
+fake_count = len(df_fake) / df.shape[0]
+real_count = len(df_real) / df.shape[0]
 
+label_count = [fake_count, real_count]
+
+df["pos_or_neg"] = df["sentiment score_text"].apply(
+    lambda x: "positive" if x > 0.05 else ("negative" if x < -0.05 else "neutral"))
+
+plt.pie(x=label_count, explode=[0.1, 0.1], colors=['firebrick', 'navy'], startangle=90, shadow=True,
+            labels=['Fake News', 'True News'], autopct='%1.1f%%')
+plt.show()
+
+ax = sb.countplot(x="label", hue="pos_or_neg", data=df)
+ax.set_xlabel("Comparison between sentiment scores of fake news and real news")
+ax.set_xticklabels(['Real News', 'Fake News'])
+ax.legend(title="Classification")
+
+plt.show()
+
+pd.set_option('display.max_columns', None)
 
 print(df_preprocessed.head())
