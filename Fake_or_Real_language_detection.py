@@ -1,3 +1,5 @@
+from typing import Any
+
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
@@ -20,6 +22,9 @@ import lxml
 from lxml.html.clean import Cleaner
 from lxml.html import fromstring
 from sklearn import preprocessing
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 # from textblob import TextBlob
 # from matplotlib.ticker import FormatStrFormatter
@@ -208,9 +213,6 @@ print("New:\n", df.describe(include="all"))
 df.dropna(subset="text")
 
 
-# z-standardizing lengths and number of words
-
-
 # Removing HTML
 def remove_html(text):
     soup = BeautifulSoup(text, "lxml")
@@ -335,6 +337,9 @@ df_preprocessed["title_wordnum_standardized"] = \
 df_preprocessed["text_wordnum_standardized"] = \
     standardize(df_preprocessed["text_wordnum"])  # Standardize word count of text
 
+# Get rid of the index column
+df_preprocessed: Any = df_preprocessed.drop('Unnamed: 0', axis=1)
+
 # Let's check how well the data is balanced between fake and real news and plot the respective sentiment scores
 fake_count = len(df_fake) / df.shape[0]
 real_count = len(df_real) / df.shape[0]
@@ -359,3 +364,18 @@ plt.title("Classification")
 pd.set_option('display.max_columns', None)
 
 print(df_preprocessed.head())
+
+
+# Model training
+X_svm = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_meanlen_standardized", "title_wordnum_standardized",
+                             "text_wordnum_standardized", "sentiment score_text", "sentiment score_title"]]
+y = df_preprocessed["label"]
+
+X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
+# SVM classifier
+clf = SVC(kernel="linear")
+clf.fit(X_train, y_train)
+
+prediction = clf.predict(X_test)
+
+print(accuracy_score(y_test, prediction))
