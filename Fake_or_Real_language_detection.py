@@ -5,13 +5,13 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 from langdetect import detect
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
 from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 # from readability import Readability
-from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
 import os
 from langdetect import DetectorFactory
@@ -19,7 +19,6 @@ from bs4 import BeautifulSoup
 import string
 from sklearn.feature_extraction.text import CountVectorizer
 import lxml
-from lxml.html.clean import Cleaner
 from lxml.html import fromstring
 from sklearn import preprocessing
 from sklearn.svm import SVC
@@ -299,12 +298,12 @@ df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctua
 df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
 
 ##tf idf extraction
-vectorizer = CountVectorizer()
+vectorizer = TfidfVectorizer()
 matrix = vectorizer.fit_transform([str(df["text"])])
 pd.DataFrame(matrix.toarray())
 print(vectorizer.get_feature_names())
 new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
-print(new_frame.head(10))
+print("TFidfframe:", new_frame.head(10))
 
 df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
