@@ -17,7 +17,7 @@ import os
 from langdetect import DetectorFactory
 from bs4 import BeautifulSoup
 import string
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import lxml
 from lxml.html import fromstring
 from sklearn import preprocessing
@@ -298,12 +298,32 @@ df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctua
 df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
 
 ##tf idf extraction
-vectorizer = TfidfVectorizer()
-matrix = vectorizer.fit_transform([str(df["text"])])
-pd.DataFrame(matrix.toarray())
-print(vectorizer.get_feature_names())
-new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names())
-print("TFidfframe:", new_frame.head(10))
+# vectorizer = TfidfVectorizer()
+# matrix = vectorizer.fit_transform([str(df["text"])])
+# print(matrix.shape)
+# #print("TFidfframe:", matrix)
+# #pd.DataFrame(matrix.toarray())
+# print(vectorizer.get_feature_names_out())
+# new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names_out())
+# print(new_frame.shape)
+# print("TFidfframe:", new_frame.sort_values(by=["tfidf"],ascending=False))
+
+count = CountVectorizer()
+word_count=count.fit_transform([str(df_preprocessed["text"])])
+print(word_count)
+print(word_count.shape)
+print(word_count.toarray())
+tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
+tfidf_transformer.fit(word_count)
+df_idf = pd.DataFrame(tfidf_transformer.idf_, index=count.get_feature_names(),columns=["idf_weights"])
+df_idf.sort_values(by=['idf_weights'])
+
+tf_idf_vector=tfidf_transformer.transform(word_count)
+feature_names = count.get_feature_names()
+first_document_vector=tf_idf_vector
+df_tfifd= pd.DataFrame(first_document_vector.T.todense(), index=feature_names, columns=["tfidf"])
+df_tfifd.sort_values(by=["tfidf"],ascending=False)
+print(df_tfifd.sort_values(by=["tfidf"],ascending=False))
 
 df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
@@ -366,15 +386,15 @@ print(df_preprocessed.head())
 
 
 # Model training
-X_svm = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_meanlen_standardized", "title_wordnum_standardized",
-                             "text_wordnum_standardized", "sentiment score_text", "sentiment score_title"]]
-y = df_preprocessed["label"]
-
-X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
-# SVM classifier
-clf = SVC(kernel="linear")
-clf.fit(X_train, y_train)
-
-prediction = clf.predict(X_test)
-
-print(accuracy_score(y_test, prediction))
+#X_svm = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_meanlen_standardized", "title_wordnum_standardized", "text_wordnum_standardized", "sentiment score_text", "sentiment score_title"]]
+# X_svm = new_frame
+# y = df_preprocessed["label"]
+#
+# #X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
+# # SVM classifier
+# clf = SVC(kernel="linear")
+# clf.fit(X_svm, y)
+#
+# prediction = clf.predict(X_svm)
+#
+#print(accuracy_score(y, prediction))
