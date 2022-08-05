@@ -7,6 +7,7 @@ from langdetect import detect
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
+
 from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
@@ -32,6 +33,7 @@ from sklearn.metrics import accuracy_score
 
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
+os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
 df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
@@ -209,7 +211,7 @@ axes[1, 1].set_xlabel("Mean word length [text]")
 print("New:\n", df.describe(include="all"))
 
 # Drop missing values
-df.dropna(subset="text")
+df["text"].dropna()
 
 
 # Removing HTML
@@ -308,8 +310,13 @@ df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_s
 # print(new_frame.shape)
 # print("TFidfframe:", new_frame.sort_values(by=["tfidf"],ascending=False))
 
+full_text = ""
+for i in range(0,len(df_preprocessed.index)):
+    full_text = full_text + df_preprocessed.loc[i, "text"]
+
 count = CountVectorizer()
-word_count=count.fit_transform([str(df_preprocessed["text"])])
+print("HIER!!!",df_preprocessed["text"])
+word_count=count.fit_transform([str(full_text)])
 print(word_count)
 print(word_count.shape)
 print(word_count.toarray())
@@ -386,15 +393,11 @@ print(df_preprocessed.head())
 
 
 # Model training
-#X_svm = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_meanlen_standardized", "title_wordnum_standardized", "text_wordnum_standardized", "sentiment score_text", "sentiment score_title"]]
-# X_svm = new_frame
-# y = df_preprocessed["label"]
-#
-# #X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
-# # SVM classifier
-# clf = SVC(kernel="linear")
-# clf.fit(X_svm, y)
-#
-# prediction = clf.predict(X_svm)
-#
-#print(accuracy_score(y, prediction))
+
+X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
+# SVM classifier
+clf = SVC(kernel="linear")
+
+X_train_tfidfmatrix = tfidf_vectorizer.transform(train_text_phrases)
+X_test_tfidfmatrix = tfidf_vectorizer.transform(test_text_phrases)
+
