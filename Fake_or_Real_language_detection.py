@@ -13,6 +13,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 # from readability import Readability
+from sklearn.preprocessing import LabelEncoder
 from wordcloud import WordCloud
 import os
 from langdetect import DetectorFactory
@@ -21,7 +22,7 @@ import string
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import lxml
 from lxml.html import fromstring
-from sklearn import preprocessing
+from sklearn import preprocessing, model_selection, naive_bayes
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -392,12 +393,30 @@ pd.set_option('display.max_columns', None)
 print(df_preprocessed.head())
 
 
-# Model training
 
-X_train, X_test, y_train, y_test = train_test_split(X_svm, y, test_size=.3)
 # SVM classifier
+
 clf = SVC(kernel="linear")
 
-X_train_tfidfmatrix = tfidf_vectorizer.transform(train_text_phrases)
-X_test_tfidfmatrix = tfidf_vectorizer.transform(test_text_phrases)
 
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'], test_size=0.3)
+
+Encoder = LabelEncoder()
+Train_Y = Encoder.fit_transform(Train_Y)
+Test_Y = Encoder.fit_transform(Test_Y)
+
+
+Tfidf_vect = TfidfVectorizer()
+Tfidf_vect.fit(df_preprocessed['text'])
+Train_X_Tfidf = Tfidf_vect.transform(Train_X)
+Test_X_Tfidf = Tfidf_vect.transform(Test_X)
+
+print(Tfidf_vect.vocabulary_)
+print(Train_X_Tfidf)
+
+
+# fit the training dataset on the NB classifier
+Naive = naive_bayes.MultinomialNB()
+Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
+predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
+print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100)
