@@ -1,9 +1,8 @@
 from typing import Any
-
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
-from langdetect import detect
+
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
@@ -12,78 +11,29 @@ from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
-# from readability import Readability
+
 from sklearn.preprocessing import LabelEncoder
-from wordcloud import WordCloud
+
 import os
-from langdetect import DetectorFactory
+
 from bs4 import BeautifulSoup
 import string
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
 import lxml
 from lxml.html import fromstring
 from sklearn import preprocessing, model_selection, naive_bayes
 from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split, cross_validate
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
-# from textblob import TextBlob
-# from matplotlib.ticker import FormatStrFormatter
-# import numpy as np
 
 
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=5000)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
-# DetectorFactory.seed = 0
-# language_list = []
-# for i in range(0, len(df.index)):
-#     try:
-#         language = detect(df.loc[i, "text"])
-#         if language == "":
-#             language = "error"
-#     except:
-#         language = "unknown"
-#     language_list.append(language)
-#
-# print(len(language_list))
-# df["language"] = language_list
-# df.to_csv("WELFAKE_Dataset_modified.csv", index=False)
-
-# print(df["language"].value_counts())
-# for i in range(0,len(df.index)):
-#    if df.loc[i, "language"] == "unknown":
-#        print(df.iloc[i])
-
-
-# wc = WordCloud().generate(df.groupby('label')['title'].sum()[1])
-# plt.figure(figsize=(15, 15))
-# plt.imshow(wc, interpolation='bilinear')
-# plt.axis("off")
-# # plt.show()
-#
-# print("Info\n")
-# df.info()
-# print("Head\n")
-# print(df.head())
-# print("Shape\n")
-# print(df.shape)
-# print("Dtype\n")
-# print(df.dtypes)
-# print("Tail\n")
-# print(df.tail())
-# print("Describe\n")
-# print(df.describe())
-# print("Columns\n")
-# print(df.columns)
-
-# Column 0 = Index (int)
-# Column 1 = title (string)
-# Column 2 = text (string)
-# Column 3 = labeled news as fake or real (fake = 1, real = 0)
 
 print(df.label.value_counts())
 
@@ -97,7 +47,6 @@ print(df.text.isnull().sum())
 
 # And 39 entries without text
 
-# df1 = df[df.isna().any(axis=1)]  # saves all entries with no title and/or no text in df1
 
 # adds title_length and text_length to dataframe
 title_length = []
@@ -108,9 +57,6 @@ for i in range(0, len(df.index)):
 df["title_length"] = title_length
 df["text_length"] = text_length
 
-# for i in range(len(df.index)):
-#    if df.loc[i, "title_length"] >= 50:
-#        print(df.loc[i, "title"])
 
 # One big problem: Due to the data being obtained through an automated process there are sometimes missing whitespaces and/or links, \n or other non-text inputs
 mean_word_length_text = []
@@ -258,6 +204,7 @@ def sentiment_score(text):
     sentiment_dict = sia.polarity_scores(text)
     return sentiment_dict['compound']
 
+
 # Standardizer
 def standardize(values):
     scaler = preprocessing.scale(values)
@@ -272,9 +219,6 @@ df[(df.language == "en")]
 for i in range(0, len(df.index)):
     test = df.loc[i, "text"]
     df.loc[i, "text"] = re.sub(r'http\S+', '', str(df.loc[i, "text"]))
-    # if test != df.loc[i,"text"]:
-    #     print("Before:", test)
-    #     print("After:", df.loc[i,"text"])
     df.loc[i, "title"] = re.sub(r'http\S+', '', str(df.loc[i, "title"]))
 # Before: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value. https://t.co/5JsyVAKQRL  Ben Sasse (@BenSasse) September 28, 20176
 # After: A person's skin, ancestry, and bank balance have nothing to do with their intrinsic value.   Ben Sasse (@BenSasse) September 28, 20176
@@ -300,45 +244,68 @@ for i in range(0, len(df.index)):
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
 df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
 
-##tf idf extraction
-# vectorizer = TfidfVectorizer()
-# matrix = vectorizer.fit_transform([str(df["text"])])
-# print(matrix.shape)
-# #print("TFidfframe:", matrix)
-# #pd.DataFrame(matrix.toarray())
-# print(vectorizer.get_feature_names_out())
-# new_frame = pd.DataFrame(matrix.toarray(), columns=vectorizer.get_feature_names_out())
-# print(new_frame.shape)
-# print("TFidfframe:", new_frame.sort_values(by=["tfidf"],ascending=False))
-
 full_text = ""
-for i in range(0,len(df_preprocessed.index)):
+for i in range(0, len(df_preprocessed.index)):
     full_text = full_text + df_preprocessed.loc[i, "text"]
 
-count = CountVectorizer()
-print("HIER!!!",df_preprocessed["text"])
-word_count=count.fit_transform([str(full_text)])
-print(word_count)
-print(word_count.shape)
-print(word_count.toarray())
-tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
-tfidf_transformer.fit(word_count)
-df_idf = pd.DataFrame(tfidf_transformer.idf_, index=count.get_feature_names(),columns=["idf_weights"])
-df_idf.sort_values(by=['idf_weights'])
+# TFIDF DER HURENSOHN
 
-tf_idf_vector=tfidf_transformer.transform(word_count)
-feature_names = count.get_feature_names()
-first_document_vector=tf_idf_vector
-df_tfidf = pd.DataFrame(first_document_vector.T.todense(), index=feature_names, columns=["tfidf"])
-df_tfidf.sort_values(by=["tfidf"],ascending=False)
-print(df_tfidf.sort_values(by=["tfidf"],ascending=False))
+PETER = df_preprocessed["text"]
 
-df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
+#print("hier ist z!",z)
+df_preprocessed["sentiment score_title"] = df_preprocessed["title"].apply(lambda x: sentiment_score(x))
+
+v = TfidfVectorizer(max_features=10000)
+tfidf = []
+for i in range(0,len(PETER.index)):
+    tfidf.append(PETER.iloc[i])
+
+x = v.fit_transform(tfidf)
+print(x.shape)
+y = x.toarray()
+print(y.shape)
+
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3)
+
+Encoder = LabelEncoder()
+Train_Y = Encoder.fit_transform(Train_Y)
+Test_Y = Encoder.fit_transform(Test_Y)
+
+Train_X_Tfidf = v.transform(Train_X)
+Test_X_Tfidf = v.transform(Test_X)
+
+print(v.vocabulary_)
+print(Train_X_Tfidf)
+
+# fit the training dataset on the NB classifier
+Naive = naive_bayes.MultinomialNB()
+Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
+predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
+print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100)
+
+clf = SVC()
+clf.fit(Train_X_Tfidf, Train_Y)
+predictions_SVM = clf.predict(Test_X_Tfidf)
+
+print("Support Vector Machine Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y)*100)
+print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, Test_Y)*100)
+print("Support Vector Machine Recall Score -> ", recall_score(predictions_SVM, Test_Y)*100)
+print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, Test_Y)*100)
+
+
+print(confusion_matrix(predictions_SVM, Test_Y))
+
+#scores_SVM = cross_validate(clf, x, df_preprocessed['label'])
+
+#print(scores_SVM["testscore"])
+
+
+
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
+df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["pos_tagged_text"] = df_preprocessed["text"].apply(lambda x: pos_tagging(x))  # POS-tagging
 # Before: No comment is expected from Barack Obama Members of the ...
 # After: 'no', 'comment', 'is', 'expected', 'from', 'barack', 'obama', 'members', 'of', 'the'
-df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: lemmatize(x))  # Lemmatize
 
 ##repeat for titles
@@ -392,32 +359,6 @@ pd.set_option('display.max_columns', None)
 
 print(df_preprocessed.head())
 
-
-
 # SVM classifier
 
-clf = SVC(kernel="linear")
-
-
-Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'], test_size=0.3)
-
-Encoder = LabelEncoder()
-Train_Y = Encoder.fit_transform(Train_Y)
-Test_Y = Encoder.fit_transform(Test_Y)
-
-
-Tfidf_vect = TfidfVectorizer()
-Tfidf_vect.fit(df_tfidf)
-Train_X_Tfidf = Tfidf_vect.transform(Train_X)
-Test_X_Tfidf = Tfidf_vect.transform(Test_X)
-
-print(Tfidf_vect.vocabulary_)
-print(Train_X_Tfidf)
-
-
-# fit the training dataset on the NB classifier
-Naive = naive_bayes.MultinomialNB()
-Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
-predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
-print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100)
-#test
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3)
