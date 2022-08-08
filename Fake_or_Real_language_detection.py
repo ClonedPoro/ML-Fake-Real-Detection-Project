@@ -329,9 +329,9 @@ df_idf.sort_values(by=['idf_weights'])
 tf_idf_vector=tfidf_transformer.transform(word_count)
 feature_names = count.get_feature_names()
 first_document_vector=tf_idf_vector
-df_tfifd= pd.DataFrame(first_document_vector.T.todense(), index=feature_names, columns=["tfidf"])
-df_tfifd.sort_values(by=["tfidf"],ascending=False)
-print(df_tfifd.sort_values(by=["tfidf"],ascending=False))
+df_tfidf = pd.DataFrame(first_document_vector.T.todense(), index=feature_names, columns=["tfidf"])
+df_tfidf.sort_values(by=["tfidf"],ascending=False)
+print(df_tfidf.sort_values(by=["tfidf"],ascending=False))
 
 df["sentiment score_title"] = df["title"].apply(lambda x: sentiment_score(x))
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
@@ -407,7 +407,7 @@ Test_Y = Encoder.fit_transform(Test_Y)
 
 
 Tfidf_vect = TfidfVectorizer()
-Tfidf_vect.fit(df_preprocessed['text'])
+Tfidf_vect.fit(df_tfidf)
 Train_X_Tfidf = Tfidf_vect.transform(Train_X)
 Test_X_Tfidf = Tfidf_vect.transform(Test_X)
 
