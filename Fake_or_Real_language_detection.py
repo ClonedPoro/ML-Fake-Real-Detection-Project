@@ -2,33 +2,26 @@ from typing import Any
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
-
 import re
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
-
 from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
-
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
-
 import os
-
 from bs4 import BeautifulSoup
 import string
-
 import lxml
 from lxml.html import fromstring
-from sklearn import preprocessing, model_selection, naive_bayes
+from sklearn import preprocessing, model_selection, naive_bayes, __all__
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split, cross_validate, cross_val_score
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
-
-
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_curve
 
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
@@ -36,16 +29,15 @@ os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
 df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
-
-print(df.label.value_counts())
+#print(df.label.value_counts())
 
 # There are 37106 fake articles and 35028 real articles in the dataset
-print("Title null entries")
-print(df.title.isnull().sum())
+#print("Title null entries")
+#print(df.title.isnull().sum())
 
 # There are 558 entries without a title
-print("Text null entries")
-print(df.text.isnull().sum())
+#print("Text null entries")
+#print(df.text.isnull().sum())
 
 # And 39 entries without text
 
@@ -244,7 +236,7 @@ for i in range(0, len(df.index)):
 # After: This is how he ll be remembered:// WATCH: Protests erupted in Chicago Tuesday night in the wake of first-degree
 
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_punctuation(x))  # Remove punctuation
-df_preprocessed["sentiment score_text"] = df["text"].apply(lambda x: sentiment_score(x))
+df_preprocessed["sentiment_score_text"] = df["text"].apply(lambda x: sentiment_score(x))
 
 full_text = ""
 for i in range(0, len(df_preprocessed.index)):
@@ -255,18 +247,21 @@ for i in range(0, len(df_preprocessed.index)):
 PETER = df_preprocessed["text"]
 
 #print("hier ist z!",z)
-df_preprocessed["sentiment score_title"] = df_preprocessed["title"].apply(lambda x: sentiment_score(x))
+df_preprocessed["sentiment_score_title"] = df_preprocessed["title"].apply(lambda x: sentiment_score(x))
 
 v = TfidfVectorizer()
 tfidf = []
 for i in range(0,len(PETER.index)):
     tfidf.append(PETER.iloc[i])
 
+
 x = v.fit_transform(tfidf)
+print(x.shape)
 y = x.toarray()
+print(y.shape)
 
-
-Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3)
+# TF IDF SECTION
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3, random_state=420)
 
 Encoder = LabelEncoder()
 Train_Y = Encoder.fit_transform(Train_Y)
@@ -275,10 +270,8 @@ Test_Y = Encoder.fit_transform(Test_Y)
 Train_X_Tfidf = v.transform(Train_X)
 Test_X_Tfidf = v.transform(Test_X)
 
-#print(v.vocabulary_)
-#print(Train_X_Tfidf)
 
-# fit the training dataset on the NB classifier
+#NB classifier
 #Naive = naive_bayes.MultinomialNB()
 #Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
 #predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
@@ -292,28 +285,24 @@ Test_X_Tfidf = v.transform(Test_X)
 #print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, Test_Y)*100)
 #print("Support Vector Machine Recall Score -> ", recall_score(predictions_SVM, Test_Y)*100)
 #print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, Test_Y)*100)
-
-
 #print(confusion_matrix(predictions_SVM, Test_Y))
 
-#scores_SVM = cross_validate(clf, x, df_preprocessed['label'])
 
-#print(scores_SVM["testscore"])
 
 # Random Forest
 print("Randomforest")
 
-clf = RandomForestClassifier()
-clf = clf.fit(Train_X_Tfidf, Train_Y)
+#clf = RandomForestClassifier()
+#clf = clf.fit(Train_X_Tfidf, Train_Y)
 #scores = cross_val_score(clf, Test_X, Test_Y>, cv=5)
-y_pred = clf.predict(Test_X_Tfidf)
-from sklearn.metrics import confusion_matrix
-cm2 = confusion_matrix(Test_Y, y_pred)
-print("hier!", y_pred, cm2)
-print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, Test_Y)*100)
-print("Random Forest Precision Score -> ", precision_score(y_pred, Test_Y)*100)
-print("Random Forest Recall Score -> ", recall_score(y_pred, Test_Y)*100)
-print("Random Forest -> ", f1_score(y_pred, Test_Y)*100)
+#y_pred = clf.predict(Test_X_Tfidf)
+#from sklearn.metrics import confusion_matrix
+#cm2 = confusion_matrix(Test_Y, y_pred)
+#print("hier!", y_pred, cm2)
+#print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, Test_Y)*100)
+#print("Random Forest Precision Score -> ", precision_score(y_pred, Test_Y)*100)
+#print("Random Forest Recall Score -> ", recall_score(y_pred, Test_Y)*100)
+#print("Random Forest -> ", f1_score(y_pred, Test_Y)*100)
 
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
@@ -388,3 +377,91 @@ label_count = [fake_count, real_count]
 #from sklearn.metrics import confusion_matrix
 #cm2 = confusion_matrix(Test_Y, y_pred)
 #print("hier!", y_pred, cm2)
+
+X_withouttfidf = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_meanlen_standardized", "title_wordnum_standardized", "text_wordnum_standardized", "sentiment_score_text", "sentiment_score_title"]]
+X_train_withouttfidf, X_test_withouttfidf, y_train_withouttfidf, y_test_withouttfidf = train_test_split(X_withouttfidf, df_preprocessed['label'], test_size=0.3, random_state=420)
+
+# SVC
+clf = SVC()
+clf.fit(X_train_withouttfidf, y_train_withouttfidf)
+predictions_SVM = clf.predict(X_test_withouttfidf)
+
+print("Support Vector Machine Accuracy Score -> ", accuracy_score(predictions_SVM, y_test_withouttfidf)*100)
+print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, y_test_withouttfidf)*100)
+print("Support Vector Machine Recall Score -> ", recall_score(predictions_SVM, y_test_withouttfidf)*100)
+print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, y_test_withouttfidf)*100)
+
+
+print(confusion_matrix(predictions_SVM, y_test_withouttfidf))
+
+#scores_SVM = cross_validate(clf, X_withouttfidf, df_preprocessed['label'])
+
+#print(scores_SVM["testscore"])
+
+#fpr, tpr,  = roc_curve(y_test_withouttfidf,  predictions_SVM)
+
+#plt.plot(fpr, tpr)
+#plt.show()
+
+#NB classifier
+Naive = naive_bayes.GaussianNB()
+Naive.fit(X_train_withouttfidf, y_train_withouttfidf)# predict the labels on validation dataset
+predictions_NB = Naive.predict(X_test_withouttfidf)# Use accuracy_score function to get the accuracy
+print("Gaussian Naive Bayes Accuracy Score -> ", accuracy_score(predictions_NB, y_test_withouttfidf)*100)
+print("Gaussian Naive Bayes Precision Score -> ", precision_score(predictions_NB, y_test_withouttfidf)*100)
+print("Gaussian Naive Bayes Recall Score -> ", recall_score(predictions_NB, y_test_withouttfidf)*100)
+print("Gaussian Naive Bayes F1-Score -> ", f1_score(predictions_NB, y_test_withouttfidf)*100)
+
+
+print(confusion_matrix(predictions_NB, y_test_withouttfidf))
+
+#scores_NB = cross_validate(naive_bayes.GaussianNB(), X_withouttfidf, df_preprocessed['label'])
+
+#print(scores_NB["testscore"])
+
+#fpr, tpr,  = roc_curve(y_test_withouttfidf,  predictions_NB)
+
+#plt.plot(fpr, tpr)
+#plt.show()
+
+
+#Random Forest
+clf_rf = RandomForestClassifier()
+clf_rf.fit(X_train_withouttfidf, y_train_withouttfidf)
+#scores = cross_val_score(clf, Test_X, Test_Y>, cv=5)
+y_pred = clf_rf.predict(X_test_withouttfidf)
+from sklearn.metrics import confusion_matrix
+cm2 = confusion_matrix(y_pred, y_test_withouttfidf)
+
+print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest Precision Score -> ", precision_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest Recall Score -> ", recall_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest -> ", f1_score(y_pred, y_test_withouttfidf)*100)
+print(cm2)
+
+# Decision Tree
+from sklearn import tree
+clf_dt = tree.DecisionTreeClassifier()
+clf_dt.fit(X_train_withouttfidf, y_train_withouttfidf)
+y_pred_dt = clf_dt.predict(X_test_withouttfidf)
+cm3 = confusion_matrix(y_pred_dt, y_test_withouttfidf)
+
+print("Decision Tree Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withouttfidf)*100)
+print("Decision Tree Precision Score -> ", precision_score(y_pred_dt, y_test_withouttfidf)*100)
+print("Decision Tree Recall Score -> ", recall_score(y_pred_dt, y_test_withouttfidf)*100)
+print("Decision Tree -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
+print(cm3)
+
+
+#K-Nearest-Neighbors
+from sklearn import neighbors
+clf_nbrs = neighbors.KNeighborsClassifier()
+clf_nbrs.fit(X_train_withouttfidf, y_train_withouttfidf)
+y_pred_nbrs = clf_nbrs.predict(X_test_withouttfidf)
+cm4 = confusion_matrix(y_pred_nbrs, y_test_withouttfidf)
+
+print("NeighborsClassifier Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier Precision Score -> ", precision_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier Recall Score -> ", recall_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
+print(cm4)
