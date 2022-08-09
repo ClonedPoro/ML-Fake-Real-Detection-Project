@@ -26,7 +26,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 #print(df.label.value_counts())
@@ -254,21 +254,30 @@ tfidf = []
 for i in range(0,len(PETER.index)):
     tfidf.append(PETER.iloc[i])
 
-
 x = v.fit_transform(tfidf)
 print(x.shape)
-y = x.toarray()
-print(y.shape)
+z = x.toarray()
+print(z.shape)
+
 
 # TF IDF SECTION
-Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3, random_state=420)
+X_train_withtfidf, X_test_withtfidf, y_train_withtfidf, y_test_withtfidf = train_test_split(df_preprocessed["text"], df_preprocessed['label'], test_size=0.3, random_state=420)
+
 
 Encoder = LabelEncoder()
-Train_Y = Encoder.fit_transform(Train_Y)
-Test_Y = Encoder.fit_transform(Test_Y)
+y_train_withtfidf = Encoder.fit_transform(y_train_withtfidf)
+y_test_withtfidf = Encoder.fit_transform(y_test_withtfidf)
 
-Train_X_Tfidf = v.transform(Train_X)
-Test_X_Tfidf = v.transform(Test_X)
+X_train_withtfidf = v.transform(X_train_withtfidf)
+X_test_withtfidf = v.transform(X_test_withtfidf)
+
+# NB_clf
+Naive2 = naive_bayes.GaussianNB()
+
+#z = v.fit_transform(z.ravel())
+Naive2.fit(X_train_withtfidf,y_train_withtfidf)# predict the labels on validation dataset
+predictions_NB = Naive2.predict(X_test_withtfidf)# Use accuracy_score function to get the accuracy
+print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, y_test_withtfidf)*100)
 
 
 #NB classifier
