@@ -27,7 +27,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 #print(df.label.value_counts())
@@ -205,15 +205,6 @@ def standardize(values):
     scaler = preprocessing.scale(values)
     return scaler
 
-def we_will_roc_you(fpr, tpr):
-    plt.plot(fpr, tpr, color='red', label='ROC')
-    plt.plot([0, 1], [0, 1], color='green', linestyle='--')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic Curve')
-    plt.legend()
-    plt.show()
-
 
 ##drop all entries with languages other than en (70700 entries), ru (156), es (147), de (112) and fr (47)
 # df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
@@ -256,6 +247,9 @@ for i in range(0, len(df_preprocessed.index)):
 
 PETER = df_preprocessed["text"]
 
+#for i in range(0,len(PETER.index)):
+    #PETER.iloc[i] = PETER.iloc[i] + df_preprocessed.loc[i, "title"]
+
 #print("hier ist z!",z)
 df_preprocessed["sentiment_score_title"] = df_preprocessed["title"].apply(lambda x: sentiment_score(x))
 
@@ -278,8 +272,8 @@ Encoder = LabelEncoder()
 y_train_withtfidf = Encoder.fit_transform(y_train_withtfidf)
 y_test_withtfidf = Encoder.fit_transform(y_test_withtfidf)
 
-X_train_withtfidf = v.transform(X_train_withtfidf)
-X_test_withtfidf = v.transform(X_test_withtfidf)
+X_train_withtfidf = v.transform(X_train_withtfidf).toarray()
+X_test_withtfidf = v.transform(X_test_withtfidf).toarray()
 
 #NB_clf
 Naive2 = naive_bayes.GaussianNB()
@@ -303,19 +297,42 @@ print(confusion_matrix(predictions_SVM, y_test_withtfidf))
 
 
 # Random Forest
-print("Randomforest")
+clf_rf = RandomForestClassifier()
+clf_rf = clf_rf.fit(X_train_withtfidf,y_train_withtfidf)
+predictions_rf = clf_rf.predict(X_test_withtfidf)
 
-#clf = RandomForestClassifier()
-#clf = clf.fit(Train_X_Tfidf, Train_Y)
-#scores = cross_val_score(clf, Test_X, Test_Y>, cv=5)
-#y_pred = clf.predict(Test_X_Tfidf)
-#from sklearn.metrics import confusion_matrix
-#cm2 = confusion_matrix(Test_Y, y_pred)
-#print("hier!", y_pred, cm2)
-#print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, Test_Y)*100)
-#print("Random Forest Precision Score -> ", precision_score(y_pred, Test_Y)*100)
-#print("Random Forest Recall Score -> ", recall_score(y_pred, Test_Y)*100)
-#print("Random Forest -> ", f1_score(y_pred, Test_Y)*100)
+cm2 = confusion_matrix(y_test_withtfidf, predictions_rf)
+print("Random Forest tfidf Accuracy Score -> ", accuracy_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf Precision Score -> ", precision_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf Recall Score -> ", recall_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf F1-Score -> ", f1_score(predictions_rf, y_test_withtfidf)*100)
+print(cm2)
+# Decision Tree
+from sklearn import tree
+clf_dt = tree.DecisionTreeClassifier()
+clf_dt.fit(X_train_withtfidf, y_train_withtfidf)
+y_pred_dt = clf_dt.predict(X_test_withtfidf)
+
+cm3 = confusion_matrix(y_pred_dt, y_test_withtfidf)
+print("Decision Tree tfidf Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Precision Score -> ", precision_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Recall Score -> ", recall_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Tree F1-Score -> ", f1_score(y_pred_dt, y_test_withtfidf)*100)
+print(cm3)
+
+
+#K-Nearest-Neighbors
+from sklearn import neighbors
+clf_nbrs = neighbors.KNeighborsClassifier()
+clf_nbrs.fit(X_train_withtfidf, y_train_withtfidf)
+y_pred_nbrs = clf_nbrs.predict(X_test_withtfidf)
+cm4 = confusion_matrix(y_pred_nbrs, y_test_withtfidf)
+
+print("NeighborsClassifier tfidf Accuracy Score -> ", accuracy_score(y_pred_nbrs, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf Precision Score -> ", precision_score(y_pred_nbrs, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf Recall Score -> ", recall_score(y_pred_nbrs, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf F1-Score -> ", f1_score(y_pred_nbrs, y_test_withtfidf)*100)
+print(cm4)
 
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
@@ -395,12 +412,9 @@ X_withouttfidf = df_preprocessed.loc[:, ["title_meanlen_standardized", "text_mea
 X_train_withouttfidf, X_test_withouttfidf, y_train_withouttfidf, y_test_withouttfidf = train_test_split(X_withouttfidf, df_preprocessed['label'], test_size=0.3, random_state=420)
 
 # SVC
-clf = SVC(probability=True)
+clf = SVC()
 clf.fit(X_train_withouttfidf, y_train_withouttfidf)
-
-roc_pred = clf.fit(X_train_withouttfidf, y_train_withouttfidf).predict_proba(X_test_withouttfidf)[:,1]
 predictions_SVM = clf.predict(X_test_withouttfidf)
-
 
 print("Support Vector Machine Accuracy Score -> ", accuracy_score(predictions_SVM, y_test_withouttfidf)*100)
 print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, y_test_withouttfidf)*100)
@@ -410,22 +424,19 @@ print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, y_test_wi
 
 print(confusion_matrix(predictions_SVM, y_test_withouttfidf))
 
-scores_SVM = cross_validate(clf, X_withouttfidf, df_preprocessed['label'])
+#scores_SVM = cross_validate(clf, X_withouttfidf, df_preprocessed['label'])
 
-print("\nSupport Vector Machine Cross Validation Scores ->", scores_SVM["test_score"], "\n")
+#print(scores_SVM["testscore"])
 
-fpr, tpr, _ = roc_curve(y_test_withouttfidf,  roc_pred)
+#fpr, tpr,  = roc_curve(y_test_withouttfidf,  predictions_SVM)
 
-we_will_roc_you(fpr, tpr)
+#plt.plot(fpr, tpr)
+#plt.show()
 
 #NB classifier
 Naive = naive_bayes.GaussianNB()
 Naive.fit(X_train_withouttfidf, y_train_withouttfidf)# predict the labels on validation dataset
-
-roc_pred_NB = Naive.fit(X_train_withouttfidf, y_train_withouttfidf).predict_proba(X_test_withouttfidf)[:,1]
-
 predictions_NB = Naive.predict(X_test_withouttfidf)# Use accuracy_score function to get the accuracy
-
 print("Gaussian Naive Bayes Accuracy Score -> ", accuracy_score(predictions_NB, y_test_withouttfidf)*100)
 print("Gaussian Naive Bayes Precision Score -> ", precision_score(predictions_NB, y_test_withouttfidf)*100)
 print("Gaussian Naive Bayes Recall Score -> ", recall_score(predictions_NB, y_test_withouttfidf)*100)
@@ -434,21 +445,19 @@ print("Gaussian Naive Bayes F1-Score -> ", f1_score(predictions_NB, y_test_witho
 
 print(confusion_matrix(predictions_NB, y_test_withouttfidf))
 
-scores_NB = cross_validate(naive_bayes.GaussianNB(), X_withouttfidf, df_preprocessed['label'])
+#scores_NB = cross_validate(naive_bayes.GaussianNB(), X_withouttfidf, df_preprocessed['label'])
 
-print("\nNaive Bayes Cross Validation Scores ->", scores_NB["test_score"], "\n")
+#print(scores_NB["testscore"])
 
+#fpr, tpr,  = roc_curve(y_test_withouttfidf,  predictions_NB)
 
-fpr, tpr, _ = roc_curve(y_test_withouttfidf,  roc_pred_NB)
+#plt.plot(fpr, tpr)
+#plt.show()
 
-we_will_roc_you(fpr, tpr)
 
 #Random Forest
 clf_rf = RandomForestClassifier()
 clf_rf.fit(X_train_withouttfidf, y_train_withouttfidf)
-
-roc_pred_RF = clf_rf.fit(X_train_withouttfidf, y_train_withouttfidf).predict_proba(X_test_withouttfidf)[:,1]
-
 #scores = cross_val_score(clf, Test_X, Test_Y>, cv=5)
 y_pred = clf_rf.predict(X_test_withouttfidf)
 from sklearn.metrics import confusion_matrix
@@ -457,24 +466,13 @@ cm2 = confusion_matrix(y_pred, y_test_withouttfidf)
 print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Precision Score -> ", precision_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Recall Score -> ", recall_score(y_pred, y_test_withouttfidf)*100)
-print("Random Forest -> ", f1_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest F1-Score -> ", f1_score(y_pred, y_test_withouttfidf)*100)
 print(cm2)
-
-scores_RF = cross_validate(RandomForestClassifier(), X_withouttfidf, df_preprocessed['label'])
-print("\nRandom Forest Cross Validation Scores ->", scores_NB["test_score"], "\n")
-
-fpr, tpr, _ = roc_curve(y_test_withouttfidf,  roc_pred_RF)
-
-we_will_roc_you(fpr, tpr)
-
 
 # Decision Tree
 from sklearn import tree
 clf_dt = tree.DecisionTreeClassifier()
 clf_dt.fit(X_train_withouttfidf, y_train_withouttfidf)
-
-roc_pred_DT = clf_dt.fit(X_train_withouttfidf, y_train_withouttfidf).predict_proba(X_test_withouttfidf)[:,1]
-
 y_pred_dt = clf_dt.predict(X_test_withouttfidf)
 cm3 = confusion_matrix(y_pred_dt, y_test_withouttfidf)
 
@@ -484,35 +482,16 @@ print("Decision Tree Recall Score -> ", recall_score(y_pred_dt, y_test_withouttf
 print("Decision Tree F1-Score -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
 print(cm3)
 
-scores_DT = cross_validate(tree.DecisionTreeClassifier(), X_withouttfidf, df_preprocessed['label'])
-
-print("\nDecision Tree Cross Validation Scores ->", scores_DT["test_score"], "\n")
-
-fpr, tpr, _ = roc_curve(y_test_withouttfidf,  roc_pred_DT)
-
-we_will_roc_you(fpr, tpr)
-
 
 #K-Nearest-Neighbors
 from sklearn import neighbors
 clf_nbrs = neighbors.KNeighborsClassifier()
 clf_nbrs.fit(X_train_withouttfidf, y_train_withouttfidf)
-
-roc_pred_KNN = clf_nbrs.fit(X_train_withouttfidf, y_train_withouttfidf).predict_proba(X_test_withouttfidf)[:,1]
-
 y_pred_nbrs = clf_nbrs.predict(X_test_withouttfidf)
 cm4 = confusion_matrix(y_pred_nbrs, y_test_withouttfidf)
 
-print("NeighborsClassifier Accuracy Score -> ", accuracy_score(y_pred_nbrs, y_test_withouttfidf)*100)
-print("NeighborsClassifier Precision Score -> ", precision_score(y_pred_nbrs, y_test_withouttfidf)*100)
-print("NeighborsClassifier Recall Score -> ", recall_score(y_pred_nbrs, y_test_withouttfidf)*100)
-print("NeighborsClassifier F1-Score -> ", f1_score(y_pred_nbrs, y_test_withouttfidf)*100)
+print("NeighborsClassifier Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier Precision Score -> ", precision_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier Recall Score -> ", recall_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier F1-Score -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
 print(cm4)
-
-scores_KNN = cross_validate(neighbors.KNeighborsClassifier(), X_withouttfidf, df_preprocessed['label'])
-
-print("\nKNN Cross Validation Scores ->", scores_KNN["test_score"])
-
-fpr, tpr, _ = roc_curve(y_test_withouttfidf,  roc_pred_KNN)
-
-we_will_roc_you(fpr, tpr)
