@@ -205,6 +205,15 @@ def standardize(values):
     scaler = preprocessing.scale(values)
     return scaler
 
+def we_will_roc_you(fpr, tpr):
+    plt.plot(fpr, tpr, color='red', label='ROC')
+    plt.plot([0, 1], [0, 1], color='green', linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic Curve')
+    plt.legend()
+    plt.show()
+
 
 ##drop all entries with languages other than en (70700 entries), ru (156), es (147), de (112) and fr (47)
 # df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
