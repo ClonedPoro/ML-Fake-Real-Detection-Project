@@ -1,7 +1,7 @@
 from typing import Any
-from sklearn.metrics import confusion_matrix
 import pandas as pd
 import seaborn as sb
+import numpy as np
 import matplotlib.pyplot as plt
 import re
 from sklearn.ensemble import RandomForestClassifier
@@ -27,7 +27,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 #print(df.label.value_counts())
@@ -205,6 +205,16 @@ def standardize(values):
     scaler = preprocessing.scale(values)
     return scaler
 
+# ROC-Curve
+def we_will_roc_you(fpr, tpr):
+    plt.plot(fpr, tpr, color='red', label='ROC')
+    plt.plot([0, 1], [0, 1], color='green', linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic Curve')
+    plt.legend()
+    plt.show()
+
 
 ##drop all entries with languages other than en (70700 entries), ru (156), es (147), de (112) and fr (47)
 # df[(df.language == "en") & (df.language == "ru") & (df.language == "fr") & (df.language == "de") & (df.language == "es")]
@@ -255,42 +265,44 @@ tfidf = []
 for i in range(0,len(PETER.index)):
     tfidf.append(PETER.iloc[i])
 
+
 x = v.fit_transform(tfidf)
 print(x.shape)
-z = x.toarray()
-print(z.shape)
-
+y = x.toarray()
+print(y.shape)
 
 # TF IDF SECTION
+
+
+Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(df_preprocessed['text'],df_preprocessed['label'],test_size=0.3, random_state=420)
+x = v.fit_transform(Train_X)
 X_train_withtfidf, X_test_withtfidf, y_train_withtfidf, y_test_withtfidf = train_test_split(df_preprocessed["text"], df_preprocessed['label'], test_size=0.3, random_state=420)
 
 
 Encoder = LabelEncoder()
-y_train_withtfidf = Encoder.fit_transform(y_train_withtfidf)
-y_test_withtfidf = Encoder.fit_transform(y_test_withtfidf)
+Train_Y = Encoder.fit_transform(Train_Y)
+Test_Y = Encoder.fit_transform(Test_Y)
 
-X_train_withtfidf = v.transform(X_train_withtfidf)
-X_test_withtfidf = v.transform(X_test_withtfidf)
+Train_X_Tfidf = v.transform(Train_X)
+Test_X_Tfidf = v.transform(Test_X)
 
-#NB_clf
-Naive2 = naive_bayes.GaussianNB()
-Naive2.fit(X_train_withtfidf,y_train_withtfidf)# predict the labels on validation dataset
-predictions_NB = Naive2.predict(X_test_withtfidf)# Use accuracy_score function to get the accuracy
-print("Naive Bayes tfidf Accuracy Score -> ",accuracy_score(predictions_NB, y_test_withtfidf)*100)
-print("Naive Bayes tfidf Precision Score -> ", precision_score(predictions_NB, y_test_withtfidf)*100)
-print("Naive Bayes tfidf Recall Score -> ", recall_score(predictions_NB, y_test_withtfidf)*100)
-print("Naive Bayes tfidf F1-Score -> ", f1_score(predictions_NB, y_test_withtfidf)*100)
-print(confusion_matrix(predictions_NB, y_test_withtfidf))
 
-#SVC()
-clf_svc = SVC()
-clf_svc.fit(X_train_withtfidf,y_train_withtfidf)
-predictions_SVM = clf_svc.predict(X_test_withtfidf)
-print("Support Vector Machine tfidf Accuracy Score -> ", accuracy_score(predictions_SVM, y_test_withtfidf)*100)
-print("Support Vector Machine tfidf Precision Score -> ", precision_score(predictions_SVM, y_test_withtfidf)*100)
-print("Support Vector Machine tfidf Recall Score -> ", recall_score(predictions_SVM, y_test_withtfidf)*100)
-print("Support Vector Machine tfidf F1-Score -> ", f1_score(predictions_SVM, y_test_withtfidf)*100)
-print(confusion_matrix(predictions_SVM, y_test_withtfidf))
+#NB classifier
+#Naive = naive_bayes.MultinomialNB()
+#Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
+#predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
+#print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100)
+
+#clf = SVC()
+#clf.fit(Train_X_Tfidf, Train_Y)
+#predictions_SVM = clf.predict(Test_X_Tfidf)
+
+#print("Support Vector Machine Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y)*100)
+#print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, Test_Y)*100)
+#print("Support Vector Machine Recall Score -> ", recall_score(predictions_SVM, Test_Y)*100)
+#print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, Test_Y)*100)
+#print(confusion_matrix(predictions_SVM, Test_Y))
+
 
 
 # Random Forest
@@ -448,7 +460,7 @@ cm2 = confusion_matrix(y_pred, y_test_withouttfidf)
 print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Precision Score -> ", precision_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Recall Score -> ", recall_score(y_pred, y_test_withouttfidf)*100)
-print("Random Forest -> ", f1_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest F1-Score -> ", f1_score(y_pred, y_test_withouttfidf)*100)
 print(cm2)
 
 scores_RF = cross_validate(RandomForestClassifier(), X_withouttfidf, df_preprocessed['label'])
