@@ -1,6 +1,7 @@
 from typing import Any
 from sklearn.metrics import confusion_matrix
 import pandas as pd
+from numpy import mean, std
 import seaborn as sb
 import matplotlib.pyplot as plt
 import re
@@ -27,7 +28,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 # cwd = os.getcwd()
 os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 #os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=500)
+df = pd.read_csv("WELFAKE_Dataset_modified_nrow=10000.csv", sep=",", low_memory=False, nrows=100)
+#df.to_csv("WELFAKE_Dataset_modified_nrow=10000.csv", sep=",")
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 #print(df.label.value_counts())
@@ -207,7 +209,10 @@ def standardize(values):
 
 def crossval(clf, x_train, y):
     scores = cross_validate(clf, x_train, y)
-    print("\nCross Validation Scores ->", scores["test_score"])
+    print("\n Cross Validation Scores ->", scores["test_score"])
+    print("Mean ->", mean(scores["test_score"]))
+    print("Standard Deviation ->", std(scores["test_score"]), "\n")
+
 
 def we_will_roc_you(fper, tper):
     plt.plot(fper, tper, color='red', label='ROC')
