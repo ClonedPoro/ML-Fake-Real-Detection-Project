@@ -1,4 +1,5 @@
 from typing import Any
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 # cwd = os.getcwd()
 # os.chdir(r"C:\Users\Jens\Desktop\Unizeug\Master\2. Semester\Applied Machine Learning\Final project")
 os.chdir(r"C:\Users\D\Desktop\PycharmProjects\PVAÜbung\PVAProjekt")
-df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=100)
+df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False, nrows=1000)
 # df = pd.read_csv("WELFAKE_Dataset_modified.csv", sep=",", low_memory=False)
 
 #print(df.label.value_counts())
@@ -268,50 +269,67 @@ Encoder = LabelEncoder()
 y_train_withtfidf = Encoder.fit_transform(y_train_withtfidf)
 y_test_withtfidf = Encoder.fit_transform(y_test_withtfidf)
 
-X_train_withtfidf = v.transform(X_train_withtfidf)
-X_test_withtfidf = v.transform(X_test_withtfidf)
+X_train_withtfidf = v.transform(X_train_withtfidf).toarray()
+X_test_withtfidf = v.transform(X_test_withtfidf).toarray()
 
-# NB_clf
+#NB_clf
 Naive2 = naive_bayes.GaussianNB()
-
-#z = v.fit_transform(z.ravel())
 Naive2.fit(X_train_withtfidf,y_train_withtfidf)# predict the labels on validation dataset
 predictions_NB = Naive2.predict(X_test_withtfidf)# Use accuracy_score function to get the accuracy
-print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, y_test_withtfidf)*100)
+print("Naive Bayes tfidf Accuracy Score -> ",accuracy_score(predictions_NB, y_test_withtfidf)*100)
+print("Naive Bayes tfidf Precision Score -> ", precision_score(predictions_NB, y_test_withtfidf)*100)
+print("Naive Bayes tfidf Recall Score -> ", recall_score(predictions_NB, y_test_withtfidf)*100)
+print("Naive Bayes tfidf F1-Score -> ", f1_score(predictions_NB, y_test_withtfidf)*100)
+print(confusion_matrix(predictions_NB, y_test_withtfidf))
 
-
-#NB classifier
-#Naive = naive_bayes.MultinomialNB()
-#Naive.fit(Train_X_Tfidf,Train_Y)# predict the labels on validation dataset
-#predictions_NB = Naive.predict(Test_X_Tfidf)# Use accuracy_score function to get the accuracy
-#print("Naive Bayes Accuracy Score -> ",accuracy_score(predictions_NB, Test_Y)*100)
-
-#clf = SVC()
-#clf.fit(Train_X_Tfidf, Train_Y)
-#predictions_SVM = clf.predict(Test_X_Tfidf)
-
-#print("Support Vector Machine Accuracy Score -> ", accuracy_score(predictions_SVM, Test_Y)*100)
-#print("Support Vector Machine Precision Score -> ", precision_score(predictions_SVM, Test_Y)*100)
-#print("Support Vector Machine Recall Score -> ", recall_score(predictions_SVM, Test_Y)*100)
-#print("Support Vector Machine F1-Score -> ", f1_score(predictions_SVM, Test_Y)*100)
-#print(confusion_matrix(predictions_SVM, Test_Y))
-
+#SVC()
+clf_svc = SVC()
+clf_svc.fit(X_train_withtfidf,y_train_withtfidf)
+predictions_SVM = clf_svc.predict(X_test_withtfidf)
+print("Support Vector Machine tfidf Accuracy Score -> ", accuracy_score(predictions_SVM, y_test_withtfidf)*100)
+print("Support Vector Machine tfidf Precision Score -> ", precision_score(predictions_SVM, y_test_withtfidf)*100)
+print("Support Vector Machine tfidf Recall Score -> ", recall_score(predictions_SVM, y_test_withtfidf)*100)
+print("Support Vector Machine tfidf F1-Score -> ", f1_score(predictions_SVM, y_test_withtfidf)*100)
+print(confusion_matrix(predictions_SVM, y_test_withtfidf))
 
 
 # Random Forest
-print("Randomforest")
+clf_rf = RandomForestClassifier()
+clf_rf = clf_rf.fit(X_train_withtfidf,y_train_withtfidf)
+predictions_rf = clf_rf.predict(X_test_withtfidf)
 
-#clf = RandomForestClassifier()
-#clf = clf.fit(Train_X_Tfidf, Train_Y)
-#scores = cross_val_score(clf, Test_X, Test_Y>, cv=5)
-#y_pred = clf.predict(Test_X_Tfidf)
-#from sklearn.metrics import confusion_matrix
-#cm2 = confusion_matrix(Test_Y, y_pred)
-#print("hier!", y_pred, cm2)
-#print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, Test_Y)*100)
-#print("Random Forest Precision Score -> ", precision_score(y_pred, Test_Y)*100)
-#print("Random Forest Recall Score -> ", recall_score(y_pred, Test_Y)*100)
-#print("Random Forest -> ", f1_score(y_pred, Test_Y)*100)
+cm2 = confusion_matrix(y_test_withtfidf, predictions_rf)
+print("Random Forest tfidf Accuracy Score -> ", accuracy_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf Precision Score -> ", precision_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf Recall Score -> ", recall_score(predictions_rf, y_test_withtfidf)*100)
+print("Random Forest tfidf F1-Score -> ", f1_score(predictions_rf, y_test_withtfidf)*100)
+print(cm2)
+# Decision Tree
+from sklearn import tree
+clf_dt = tree.DecisionTreeClassifier()
+clf_dt.fit(X_train_withtfidf, y_train_withtfidf)
+y_pred_dt = clf_dt.predict(X_test_withtfidf)
+
+cm3 = confusion_matrix(y_pred_dt, y_test_withtfidf)
+print("Decision Tree tfidf Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Precision Score -> ", precision_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Recall Score -> ", recall_score(y_pred_dt, y_test_withtfidf)*100)
+print("Decision Tree tfidf Tree F1-Score -> ", f1_score(y_pred_dt, y_test_withtfidf)*100)
+print(cm3)
+
+
+#K-Nearest-Neighbors
+from sklearn import neighbors
+clf_nbrs = neighbors.KNeighborsClassifier()
+clf_nbrs.fit(X_train_withtfidf, y_train_withtfidf)
+y_pred_nbrs = clf_nbrs.predict(X_test_withtfidf)
+cm4 = confusion_matrix(y_pred_nbrs, y_test_withtfidf)
+
+print("NeighborsClassifier tfidf Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf Precision Score -> ", precision_score(y_pred_dt, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf Recall Score -> ", recall_score(y_pred_dt, y_test_withtfidf)*100)
+print("NeighborsClassifier tfidf F1-Score -> ", f1_score(y_pred_dt, y_test_withtfidf)*100)
+print(cm4)
 
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: tokenizer(x))  # tokenization
 df_preprocessed["text"] = df_preprocessed["text"].apply(lambda x: remove_stopwords(x))  # Remove stop words
@@ -445,7 +463,7 @@ cm2 = confusion_matrix(y_pred, y_test_withouttfidf)
 print("Random Forest Accuracy Score -> ", accuracy_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Precision Score -> ", precision_score(y_pred, y_test_withouttfidf)*100)
 print("Random Forest Recall Score -> ", recall_score(y_pred, y_test_withouttfidf)*100)
-print("Random Forest -> ", f1_score(y_pred, y_test_withouttfidf)*100)
+print("Random Forest F1-Score -> ", f1_score(y_pred, y_test_withouttfidf)*100)
 print(cm2)
 
 # Decision Tree
@@ -458,7 +476,7 @@ cm3 = confusion_matrix(y_pred_dt, y_test_withouttfidf)
 print("Decision Tree Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withouttfidf)*100)
 print("Decision Tree Precision Score -> ", precision_score(y_pred_dt, y_test_withouttfidf)*100)
 print("Decision Tree Recall Score -> ", recall_score(y_pred_dt, y_test_withouttfidf)*100)
-print("Decision Tree -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
+print("Decision Tree F1-Score -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
 print(cm3)
 
 
@@ -472,5 +490,5 @@ cm4 = confusion_matrix(y_pred_nbrs, y_test_withouttfidf)
 print("NeighborsClassifier Accuracy Score -> ", accuracy_score(y_pred_dt, y_test_withouttfidf)*100)
 print("NeighborsClassifier Precision Score -> ", precision_score(y_pred_dt, y_test_withouttfidf)*100)
 print("NeighborsClassifier Recall Score -> ", recall_score(y_pred_dt, y_test_withouttfidf)*100)
-print("NeighborsClassifier -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
+print("NeighborsClassifier F1-Score -> ", f1_score(y_pred_dt, y_test_withouttfidf)*100)
 print(cm4)
